@@ -158,86 +158,140 @@ namespace AdventOfCode2017Day3
             Your puzzle input is still 325489.
             */
 
-            //initialize each with the first entry
-            List<List<int>>[] Walls = new List<List<int>>[4];
-            foreach (var wallSide in orderedWalls)
+//INPUT WAS:   325489
+//ANSWER WAS:  330785
+/*
+ * 
+ * Wall: NorthWall Size: 3 Wall: 2, 4, 5 Last Wall: 1, 1
+Wall: WestWall Size: 3 Wall: 5, 10, 11 Last Wall: 4, 1
+Wall: SouthWall Size: 4 Wall: 11, 23, 25, 26 Last Wall: 10, 1, 1
+Wall: EastWall Size: 4 Wall: 26, 54, 57, 59 Last Wall: 25, 1, 2
+Wall: NorthWall Size: 5 Wall: 59, 122, 133, 142, 147 Last Wall: 57, 2, 4, 5
+Wall: WestWall Size: 5 Wall: 147, 304, 330, 351, 362 Last Wall: 142, 5, 10, 11
+Wall: SouthWall Size: 6 Wall: 362, 747, 806, 880, 931, 957 Last Wall: 351, 11, 23, 25, 26
+Wall: EastWall Size: 6 Wall: 957, 1968, 2105, 2275, 2391, 2450 Last Wall: 931, 26, 54, 57, 59
+Wall: NorthWall Size: 7 Wall: 2450, 5022, 5336, 5733, 6155, 6444, 6591 Last Wall: 2391, 59, 122, 133, 142, 147
+Wall: WestWall Size: 7 Wall: 6591, 13486, 14267, 15252, 16295, 17008, 17370 Last Wall: 6444, 147, 304, 330, 351, 362
+Wall: SouthWall Size: 8 Wall: 17370, 35487, 37402, 39835, 42452, 45220, 47108, 48065 Last Wall: 17008, 362, 747, 806, 880, 931, 957
+Wall: EastWall Size: 8 Wall: 48065, 98098, 103128, 109476, 116247, 123363, 128204, 130654 Last Wall: 47108, 957, 1968, 2105, 2275, 2391, 2450
+Wall: NorthWall Size: 9 Wall: 130654, 266330, 279138, 295229, 312453, 330785, 349975, 363010, 369601 Last Wall: 128204, 2450, 5022, 5336, 5733, 6155, 6444, 6591
+Wall: WestWall Size: 9 Wall: 369601, 752688, 787032, 830037, 875851, 924406, 975079, 1009457, 1026827 Last Wall: 363010, 6591, 13486, 14267, 15252, 16295, 17008, 17370
+Wall: SouthWall Size: 10 Wall: 1026827, 2089141, 2179400, 2292124, 2411813, 2539320, 2674100, 2814493, 2909666, 2957731 Last Wall: 1009457, 17370, 35487, 37402, 39835, 42452, 45220, 47108, 48065
+Wall: EastWall Size: 10 Wall: 2957731, 6013560, 6262851, 6573553, 6902404, 7251490, 7619304, 8001525, 8260383, 8391037 Last Wall: 2909666, 48065, 98098, 103128, 109476, 116247, 123363, 128204, 130654
+Done
+
+
+
+ */
+
+
+//initialize each with the first entry
+List<List<int>>[] Walls = new List<List<int>>[4];
+foreach (var wallSide in orderedWalls)
+{
+    var q = new List<int>() { 1 };
+    Walls[Convert.ToInt32(wallSide)] = new List<List<int>>();
+    Walls[Convert.ToInt32(wallSide)].Add(q);
+}
+
+//add another 1 to both north and south
+Walls[Convert.ToInt32(Wall.NorthWall)][0].Add(1);
+Walls[Convert.ToInt32(Wall.SouthWall)][0].Add(1);
+Walls[Convert.ToInt32(Wall.EastWall)][0].Add(2);
+Walls[Convert.ToInt32(Wall.NorthWall)].Add(new List<int> { 2 });
+
+//WE are starting to go westward on the north wall.  Wall size is 2.
+int wallSize = 3;
+int lastValue = 2;
+while (true)
+{
+    int count = 1;
+    int wallPosition = 1;
+
+
+    foreach (var wallSide in orderedWalls)
+    {
+        var currentWall = Walls[Convert.ToInt32(wallSide)].Last();
+        var nextWall = Walls[Convert.ToInt32(NextWall((Wall)wallSide))].Last();
+
+        var startPosition = currentWall.Count;
+        //loop used to add things up
+        for (int wallWalk = startPosition; wallWalk < wallSize; wallWalk++)
+        {
+            int total = lastValue;// + 50;//always add in the last value = 50 is placeholder
+
+            //in last position
+            if (wallWalk == wallSize-1)//we are at the corner
             {
-                var q = new List<int>() { 1 };
-                Walls[Convert.ToInt32(wallSide)] = new List<List<int>>();
-                Walls[Convert.ToInt32(wallSide)].Add(q);
-            }
+                //calculate total phase:
+                //since we have the lastvalue added already, all we need is the 2nd item from the next wall
+                total += nextWall[1];
 
-            //add another 1 to both north and south
-            Walls[Convert.ToInt32(Wall.NorthWall)][0].Add(1);
-            Walls[Convert.ToInt32(Wall.SouthWall)][0].Add(1);
-            Walls[Convert.ToInt32(Wall.EastWall)][0].Add(2);
-            Walls[Convert.ToInt32(Wall.NorthWall)].Add(new List<int> { 2 });
-
-            //WE are starting to go westward on the north wall.  Wall size is 2.
-            int wallSize = 3;
-
-            while (true)
+                //wall array phase
+                //once we get total, add to current
+                //create a new one on the next wall with just the total
+                currentWall.Add(total);
+                Walls[Convert.ToInt32(NextWall((Wall)wallSide))].Add(new List<int> { total });
+            } else
             {
-                int count = 1;
-                int wallPosition = 1;
-                int lastValue = 2;
 
-                foreach (var wallSide in orderedWalls)
+                //calculate total phase:
+                //for non corners its the same:
+                //take current position and go from pos-1 to pos+2 and add them up
+                //check to make sure they exist before accessing them to make sure of corner cases
+                int prevWallIndex = Walls[Convert.ToInt32(wallSide)].Count - 2;
+                var previousWall = Walls[Convert.ToInt32(wallSide)][prevWallIndex];
+
+                for(int j=wallWalk-1;j < wallWalk + 2; j++)
                 {
-                    var currentWall = Walls[Convert.ToInt32(wallSide)].Last();
-                    var nextWall = Walls[Convert.ToInt32(NextWall((Wall)wallSide))].Last();
-
-                    var startPosition = currentWall.Count;
-                    //loop used to add things up
-                    for (int wallWalk = startPosition; wallWalk < wallSize; wallWalk++)
+                    if(previousWall.ElementAtOrDefault(j) > 0)
                     {
-                        int total = wallPosition + 50;//always add in the last value = 50 is placeholder
-
-                        //in last position
-                        if (wallWalk == wallSize-1)//we are at the corner
-                        {
-                            //once we get total, add to current
-                            //create a new one on the next wall with just the total
-                            currentWall.Add(total);
-                            Walls[Convert.ToInt32(NextWall((Wall)wallSide))].Add(new List<int> { total });
-                        } else
-                        {
-                            //next to last position
-                            if(wallWalk == wallSize-2)
-                            {
-                                //once we get total, add to current
-                                //push it to the beginning of the next wall
-                                currentWall.Add(total);
-                                nextWall.Insert(0,total);
-                            }
-                            else //normal position
-                            {//else we take as many as we can - max of 3 off the wall and one trailer
-
-
-                                currentWall.Add(total);
-                            }
-                        }
-                        wallPosition++;
-
+                        total += previousWall[j];
                     }
-
-                    int theIndex = Walls[Convert.ToInt32(wallSide)].Count - 2;
-
-                    Console.WriteLine(string.Format("Wall: {0} Size: {1} Wall: {2} Last Wall: {3}", wallSide, wallSize, String.Join(", ", currentWall.ToArray()), String.Join(", ", Walls[Convert.ToInt32(wallSide)][theIndex].ToArray())));
-
-                    if(count > 1 && Convert.ToInt32(wallSide) % 2 == 1) {
-                        wallSize++;
-                    }
-
-                    count++;
                 }
 
-                Console.ReadKey();
-            }
+                //next to last position
+                if (wallWalk == wallSize-2)
+                {
+                    //once we get total, add to current
+                    //push it to the beginning of the next wall
+                    currentWall.Add(total);
+                    nextWall.Insert(0,total);
+                }
+                else //normal position
+                {//else we take as many as we can - max of 3 off the wall and one trailer
 
+
+                    currentWall.Add(total);
+                }
+            }
+            wallPosition++;
+            lastValue = total;
 
         }
 
+        int theIndex = Walls[Convert.ToInt32(wallSide)].Count - 2;
+
+        Console.WriteLine(string.Format("Wall: {0} Size: {1} Wall: {2} Last Wall: {3}", wallSide, wallSize, String.Join(", ", currentWall.ToArray()), String.Join(", ", Walls[Convert.ToInt32(wallSide)][theIndex].ToArray())));
+
+        if(count > 1 && Convert.ToInt32(wallSide) % 2 == 1) {
+            wallSize++;
+        }
+
+        count++;
 
     }
+
+    //Console.ReadKey();
+
+    if (lastValue > 325489)
+        break;
+}
+
+Console.WriteLine("Done");
+Console.ReadKey();
+}
+
+
+}
 }
